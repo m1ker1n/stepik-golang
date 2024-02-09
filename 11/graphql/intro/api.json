@@ -1,0 +1,57 @@
+{
+    "status": 200,
+    "body": {
+        "photos": [
+            {"id": 1, "url": "//example.com/1.jpg"}
+        ],
+        "recomendations": {
+            "videos": {"id": 1, "title": "..."}
+        }
+    }
+}
+
+{
+    "photos": [
+        {"id": 1, "url": "//example.com/1.jpg"}
+    ]
+}
+
+[12, "//exampl.com/1.jpg", "rvasily", true]
+
+[
+    {
+        "id": 12,  
+        "url": "//exampl.com/1.jpg", 
+        "username": "rvasily", 
+        "enabled": true
+    }
+]
+
+// HTTP-status 200
+{
+    //все хорошо
+    "status": 200,
+    "body": {
+        "photos": [{"id": 1}]
+    }
+}
+
+// HTTP-status 200
+{
+    //запрос приняли
+    //но не смогли обработать
+    "status": 500,
+    "body": {
+        "error": "database"
+    }
+}
+
+// HTTP-status 500
+// приложение вообще не отвечает
+[нет тела ответа]
+
+
+
+
+[ {"id": 12, "user": "...", "enabled": true} ]
+ 

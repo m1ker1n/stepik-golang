@@ -1,0 +1,855 @@
+.
+├── Makefile
+├── Readme.md
+├── api
+│   ├── auth.proto
+│   └── schema.graphql
+├── bin
+│   ├── auth
+│   ├── photoauth
+│   └── photolist
+├── build
+│   ├── Dockerfile
+│   └── Dockerfile.Multistage
+├── cmd
+│   ├── auth
+│   │   └── main.go
+│   ├── photoauth
+│   │   └── main.go
+│   └── photolist
+│       └── main.go
+├── configs
+│   ├── air.conf
+│   ├── auth.env
+│   ├── auth.yaml
+│   ├── common.env
+│   ├── gqlgen.yml
+│   ├── nginx
+│   │   └── nginx.conf
+│   ├── photoauth.env
+│   ├── photoauth.yaml
+│   └── photolist.yaml
+├── deployments
+│   └── docker-compose.yml
+├── dev
+│   ├── adminer.dc.yaml
+│   ├── db_init.sql
+│   └── dev
+├── docs
+│   ├── docker.txt
+│   ├── import_cycle.txt
+│   ├── layers_1.txt
+│   ├── layers_2.txt
+│   ├── modules.txt
+│   ├── note.txt
+│   ├── queries.txt
+│   └── struct_all_files.txt
+├── go.mod
+├── go.sum
+├── images
+│   ├── 0606d2dce38b4993ec7ab4991a88648d.jpg
+│   ├── 0606d2dce38b4993ec7ab4991a88648d_32.jpg
+│   ├── 0606d2dce38b4993ec7ab4991a88648d_600.jpg
+│   ├── 08143736bbbd748dde28104c1c4e02f0.jpg
+│   ├── 08143736bbbd748dde28104c1c4e02f0_32.jpg
+│   ├── 08143736bbbd748dde28104c1c4e02f0_600.jpg
+│   ├── 21370b81864074aedf3263861f7dd519.jpg
+│   ├── 21370b81864074aedf3263861f7dd519_32.jpg
+│   ├── 21370b81864074aedf3263861f7dd519_600.jpg
+│   ├── 433b9ab5f0649e6a17da024e4efaadef.jpg
+│   ├── 433b9ab5f0649e6a17da024e4efaadef_32.jpg
+│   ├── 433b9ab5f0649e6a17da024e4efaadef_600.jpg
+│   ├── 5b280f8f6c549272ee8626f26bfdf8f0.jpg
+│   ├── 5b280f8f6c549272ee8626f26bfdf8f0_32.jpg
+│   ├── 5b280f8f6c549272ee8626f26bfdf8f0_600.jpg
+│   ├── 6128956443b9c8044a9f73c325e95b2d.jpg
+│   ├── 6128956443b9c8044a9f73c325e95b2d_32.jpg
+│   ├── 6128956443b9c8044a9f73c325e95b2d_600.jpg
+│   ├── 6f89427583acff4ecb380450ed00b24b.jpg
+│   ├── 6f89427583acff4ecb380450ed00b24b_32.jpg
+│   ├── 6f89427583acff4ecb380450ed00b24b_600.jpg
+│   ├── 70ba66d831ce7c42891799d246829d0d.jpg
+│   ├── 70ba66d831ce7c42891799d246829d0d_32.jpg
+│   ├── 70ba66d831ce7c42891799d246829d0d_600.jpg
+│   ├── 93aaabaf6c9afc54965d721f108474df.jpg
+│   ├── 93aaabaf6c9afc54965d721f108474df_32.jpg
+│   ├── 93aaabaf6c9afc54965d721f108474df_600.jpg
+│   ├── 93e4f2d335f35df202323284642480c5.jpg
+│   ├── 93e4f2d335f35df202323284642480c5_32.jpg
+│   ├── 93e4f2d335f35df202323284642480c5_600.jpg
+│   ├── 9740f4023540baaa685e42277677ec67.jpg
+│   ├── 9740f4023540baaa685e42277677ec67_32.jpg
+│   ├── 9740f4023540baaa685e42277677ec67_600.jpg
+│   ├── 9bf7a47d61f5e67c4c323881eb1f86fa.jpg
+│   ├── 9bf7a47d61f5e67c4c323881eb1f86fa_32.jpg
+│   ├── 9bf7a47d61f5e67c4c323881eb1f86fa_600.jpg
+│   ├── 9fc84cce2b7847a1669b5a3a049fecea.jpg
+│   ├── 9fc84cce2b7847a1669b5a3a049fecea_32.jpg
+│   ├── 9fc84cce2b7847a1669b5a3a049fecea_600.jpg
+│   ├── aa767771763cb2b7c0f2f92909fe0fe3.jpg
+│   ├── aa767771763cb2b7c0f2f92909fe0fe3_32.jpg
+│   ├── aa767771763cb2b7c0f2f92909fe0fe3_600.jpg
+│   ├── bb73d02d20c139e4adc8dc817397cb80.jpg
+│   ├── bb73d02d20c139e4adc8dc817397cb80_32.jpg
+│   ├── bb73d02d20c139e4adc8dc817397cb80_600.jpg
+│   ├── c805172e4c3e4e1b35d73077ff47e3dc.jpg
+│   ├── c805172e4c3e4e1b35d73077ff47e3dc_32.jpg
+│   ├── c805172e4c3e4e1b35d73077ff47e3dc_600.jpg
+│   ├── dc81223050059c01828599e04dca01fd.jpg
+│   ├── dc81223050059c01828599e04dca01fd_32.jpg
+│   ├── dc81223050059c01828599e04dca01fd_600.jpg
+│   ├── df311d3c12b2542f36e0f2ec5c1735fd.jpg
+│   ├── df311d3c12b2542f36e0f2ec5c1735fd_32.jpg
+│   ├── df311d3c12b2542f36e0f2ec5c1735fd_600.jpg
+│   ├── ee303ac2f78c12b4705ec61b15cb815f.jpg
+│   ├── ee303ac2f78c12b4705ec61b15cb815f_32.jpg
+│   └── ee303ac2f78c12b4705ec61b15cb815f_600.jpg
+├── minio_data
+│   └── photolist
+│       ├── 14f4fd52-c83e-46f1-b604-63cfd08b7704.jpg
+│       ├── 14f4fd52-c83e-46f1-b604-63cfd08b7704_32.jpg
+│       ├── 14f4fd52-c83e-46f1-b604-63cfd08b7704_600.jpg
+│       ├── 1b03db3d-222f-4d38-9937-d3a4b96ae946.jpg
+│       ├── 1b03db3d-222f-4d38-9937-d3a4b96ae946_32.jpg
+│       ├── 1b03db3d-222f-4d38-9937-d3a4b96ae946_600.jpg
+│       ├── 1e70d8da-5009-46c6-9469-91c1e8c9a377.jpg
+│       ├── 1e70d8da-5009-46c6-9469-91c1e8c9a377_32.jpg
+│       ├── 1e70d8da-5009-46c6-9469-91c1e8c9a377_600.jpg
+│       ├── 274d8a04-c425-4e07-8de3-4960a1fd379a.jpg
+│       ├── 274d8a04-c425-4e07-8de3-4960a1fd379a_32.jpg
+│       ├── 274d8a04-c425-4e07-8de3-4960a1fd379a_600.jpg
+│       ├── 58575a98-44f2-49e4-9212-0a1ef5133795.jpg
+│       ├── 58575a98-44f2-49e4-9212-0a1ef5133795_32.jpg
+│       ├── 58575a98-44f2-49e4-9212-0a1ef5133795_600.jpg
+│       ├── 7334324b-de86-47ad-bf22-669a253f02b8.jpg
+│       ├── 7334324b-de86-47ad-bf22-669a253f02b8_32.jpg
+│       ├── 7334324b-de86-47ad-bf22-669a253f02b8_600.jpg
+│       ├── bb455eb9-3f17-42ce-be61-c86d0e4905da.jpg
+│       ├── bb455eb9-3f17-42ce-be61-c86d0e4905da_32.jpg
+│       ├── bb455eb9-3f17-42ce-be61-c86d0e4905da_600.jpg
+│       ├── bc9cb885-571e-45bf-8ff8-a90fec43fbb0.jpg
+│       ├── bc9cb885-571e-45bf-8ff8-a90fec43fbb0_32.jpg
+│       ├── bc9cb885-571e-45bf-8ff8-a90fec43fbb0_600.jpg
+│       ├── de21aa01-f8e7-4988-9bc8-7d041c80e5ad.jpg
+│       ├── de21aa01-f8e7-4988-9bc8-7d041c80e5ad_32.jpg
+│       ├── de21aa01-f8e7-4988-9bc8-7d041c80e5ad_600.jpg
+│       ├── f651e2cc-d501-4eeb-ad37-d074737b1a43.jpg
+│       ├── f651e2cc-d501-4eeb-ad37-d074737b1a43_32.jpg
+│       ├── f651e2cc-d501-4eeb-ad37-d074737b1a43_600.jpg
+│       ├── feb6a955-c9a8-4282-add9-3c85ae42a40d.jpg
+│       ├── feb6a955-c9a8-4282-add9-3c85ae42a40d_32.jpg
+│       └── feb6a955-c9a8-4282-add9-3c85ae42a40d_600.jpg
+├── pkg
+│   ├── assets
+│   │   ├── assets.go
+│   │   ├── assets_gen.go
+│   │   ├── assets_note.txt
+│   │   └── assets_vfsdata.go
+│   ├── blobstorage
+│   │   ├── fs.go
+│   │   └── s3.go
+│   ├── config
+│   │   └── cfg.go
+│   ├── graphql
+│   │   ├── gqlg_tracer.go
+│   │   ├── gqlgen_middleware.go
+│   │   ├── graphql_generated.go
+│   │   └── graphql_resolver.go
+│   ├── index
+│   │   └── index.go
+│   ├── middleware
+│   │   ├── accesslog.go
+│   │   ├── panic.go
+│   │   └── request_id.go
+│   ├── photos
+│   │   ├── handlers.go
+│   │   ├── repo.go
+│   │   └── utils.go
+│   ├── session
+│   │   ├── auth.go
+│   │   ├── auth.pb.go
+│   │   ├── session_common.go
+│   │   ├── session_db.go
+│   │   ├── session_grcp.go
+│   │   ├── session_jwt.go
+│   │   └── session_jwt_ver.go
+│   ├── templates
+│   │   └── templates.go
+│   ├── token
+│   │   ├── token_crypt.go
+│   │   ├── token_hash.go
+│   │   ├── token_jwt.go
+│   │   └── token_middleware.go
+│   ├── user
+│   │   ├── user.go
+│   │   ├── user_handlers.go
+│   │   ├── user_repo.go
+│   │   └── userloader_gen.go
+│   └── utils
+│       ├── httputils
+│       │   └── httputils.go
+│       ├── randutils
+│       │   └── randutils.go
+│       └── traceutils
+│           └── md.go
+├── scripts
+│   └── wait-for-it.sh
+├── static
+│   ├── css
+│   │   └── bootstrap
+│   │       ├── bootstrap-grid.css
+│   │       ├── bootstrap-grid.css.map
+│   │       ├── bootstrap-grid.min.css
+│   │       ├── bootstrap-grid.min.css.map
+│   │       ├── bootstrap-reboot.css
+│   │       ├── bootstrap-reboot.css.map
+│   │       ├── bootstrap-reboot.min.css
+│   │       ├── bootstrap-reboot.min.css.map
+│   │       ├── bootstrap.css
+│   │       ├── bootstrap.css.map
+│   │       ├── bootstrap.min.css
+│   │       └── bootstrap.min.css.map
+│   ├── favicon.ico
+│   ├── js
+│   │   ├── bootstrap
+│   │   │   ├── bootstrap.bundle.js
+│   │   │   ├── bootstrap.bundle.js.map
+│   │   │   ├── bootstrap.bundle.min.js
+│   │   │   ├── bootstrap.bundle.min.js.map
+│   │   │   ├── bootstrap.js
+│   │   │   ├── bootstrap.js.map
+│   │   │   ├── bootstrap.min.js
+│   │   │   └── bootstrap.min.js.map
+│   │   └── site
+│   │       ├── list.js
+│   │       └── list_gql.js
+│   └── logo.png
+├── templates
+│   ├── change_pass.html
+│   ├── list.html
+│   ├── list_gql.html
+│   ├── login.html
+│   └── reg.html
+├── tmp
+│   ├── air_errors.log
+│   ├── air_errors.log-e
+│   ├── build-errors.log
+│   ├── build-errors.log-e
+│   ├── gocache
+│   ├── main
+│   └── mysql
+│       ├── #innodb_temp
+│       │   ├── temp_1.ibt
+│       │   ├── temp_10.ibt
+│       │   ├── temp_2.ibt
+│       │   ├── temp_3.ibt
+│       │   ├── temp_4.ibt
+│       │   ├── temp_5.ibt
+│       │   ├── temp_6.ibt
+│       │   ├── temp_7.ibt
+│       │   ├── temp_8.ibt
+│       │   └── temp_9.ibt
+│       ├── auto.cnf
+│       ├── binlog.000021
+│       ├── binlog.000022
+│       ├── binlog.000023
+│       ├── binlog.000024
+│       ├── binlog.000025
+│       ├── binlog.000026
+│       ├── binlog.000027
+│       ├── binlog.000028
+│       ├── binlog.000029
+│       ├── binlog.000030
+│       ├── binlog.000031
+│       ├── binlog.000032
+│       ├── binlog.000033
+│       ├── binlog.000034
+│       ├── binlog.000035
+│       ├── binlog.000036
+│       ├── binlog.000037
+│       ├── binlog.000038
+│       ├── binlog.000039
+│       ├── binlog.000040
+│       ├── binlog.000041
+│       ├── binlog.000042
+│       ├── binlog.000043
+│       ├── binlog.000044
+│       ├── binlog.000045
+│       ├── binlog.000046
+│       ├── binlog.000047
+│       ├── binlog.000048
+│       ├── binlog.000049
+│       ├── binlog.000050
+│       ├── binlog.000051
+│       ├── binlog.000052
+│       ├── binlog.000053
+│       ├── binlog.000054
+│       ├── binlog.000055
+│       ├── binlog.000056
+│       ├── binlog.000057
+│       ├── binlog.000058
+│       ├── binlog.000059
+│       ├── binlog.000060
+│       ├── binlog.000061
+│       ├── binlog.000062
+│       ├── binlog.000063
+│       ├── binlog.000064
+│       ├── binlog.000065
+│       ├── binlog.000066
+│       ├── binlog.000067
+│       ├── binlog.000068
+│       ├── binlog.000069
+│       ├── binlog.000070
+│       ├── binlog.000071
+│       ├── binlog.000072
+│       ├── binlog.000073
+│       ├── binlog.000074
+│       ├── binlog.000075
+│       ├── binlog.000076
+│       ├── binlog.000077
+│       ├── binlog.000078
+│       ├── binlog.000079
+│       ├── binlog.000080
+│       ├── binlog.000081
+│       ├── binlog.000082
+│       ├── binlog.000083
+│       ├── binlog.000084
+│       ├── binlog.000085
+│       ├── binlog.index
+│       ├── ca-key.pem
+│       ├── ca.pem
+│       ├── client-cert.pem
+│       ├── client-key.pem
+│       ├── ib_buffer_pool
+│       ├── ib_logfile0
+│       ├── ib_logfile1
+│       ├── ibdata1
+│       ├── ibtmp1
+│       ├── mysql
+│       │   ├── general_log.CSM
+│       │   ├── general_log.CSV
+│       │   ├── general_log_201.sdi
+│       │   ├── slow_log.CSM
+│       │   ├── slow_log.CSV
+│       │   └── slow_log_202.sdi
+│       ├── mysql.ibd
+│       ├── performance_schema
+│       │   ├── accounts_138.sdi
+│       │   ├── cond_instances_77.sdi
+│       │   ├── data_lock_waits_154.sdi
+│       │   ├── data_locks_153.sdi
+│       │   ├── events_errors_su_132.sdi
+│       │   ├── events_errors_su_133.sdi
+│       │   ├── events_errors_su_134.sdi
+│       │   ├── events_errors_su_135.sdi
+│       │   ├── events_errors_su_136.sdi
+│       │   ├── events_stages_cu_104.sdi
+│       │   ├── events_stages_hi_105.sdi
+│       │   ├── events_stages_hi_106.sdi
+│       │   ├── events_stages_su_107.sdi
+│       │   ├── events_stages_su_108.sdi
+│       │   ├── events_stages_su_109.sdi
+│       │   ├── events_stages_su_110.sdi
+│       │   ├── events_stages_su_111.sdi
+│       │   ├── events_statement_112.sdi
+│       │   ├── events_statement_113.sdi
+│       │   ├── events_statement_114.sdi
+│       │   ├── events_statement_115.sdi
+│       │   ├── events_statement_116.sdi
+│       │   ├── events_statement_117.sdi
+│       │   ├── events_statement_118.sdi
+│       │   ├── events_statement_119.sdi
+│       │   ├── events_statement_120.sdi
+│       │   ├── events_statement_121.sdi
+│       │   ├── events_statement_122.sdi
+│       │   ├── events_statement_123.sdi
+│       │   ├── events_transacti_124.sdi
+│       │   ├── events_transacti_125.sdi
+│       │   ├── events_transacti_126.sdi
+│       │   ├── events_transacti_127.sdi
+│       │   ├── events_transacti_128.sdi
+│       │   ├── events_transacti_129.sdi
+│       │   ├── events_transacti_130.sdi
+│       │   ├── events_transacti_131.sdi
+│       │   ├── events_waits_cur_78.sdi
+│       │   ├── events_waits_his_79.sdi
+│       │   ├── events_waits_his_80.sdi
+│       │   ├── events_waits_sum_81.sdi
+│       │   ├── events_waits_sum_82.sdi
+│       │   ├── events_waits_sum_83.sdi
+│       │   ├── events_waits_sum_84.sdi
+│       │   ├── events_waits_sum_85.sdi
+│       │   ├── events_waits_sum_86.sdi
+│       │   ├── file_instances_87.sdi
+│       │   ├── file_summary_by__88.sdi
+│       │   ├── file_summary_by__89.sdi
+│       │   ├── global_status_172.sdi
+│       │   ├── global_variables_175.sdi
+│       │   ├── host_cache_90.sdi
+│       │   ├── hosts_139.sdi
+│       │   ├── keyring_keys_145.sdi
+│       │   ├── log_status_165.sdi
+│       │   ├── memory_summary_b_147.sdi
+│       │   ├── memory_summary_b_148.sdi
+│       │   ├── memory_summary_b_149.sdi
+│       │   ├── memory_summary_b_150.sdi
+│       │   ├── memory_summary_g_146.sdi
+│       │   ├── metadata_locks_152.sdi
+│       │   ├── mutex_instances_91.sdi
+│       │   ├── objects_summary__92.sdi
+│       │   ├── performance_time_93.sdi
+│       │   ├── persisted_variab_178.sdi
+│       │   ├── prepared_stateme_166.sdi
+│       │   ├── replication_appl_158.sdi
+│       │   ├── replication_appl_159.sdi
+│       │   ├── replication_appl_160.sdi
+│       │   ├── replication_appl_161.sdi
+│       │   ├── replication_appl_163.sdi
+│       │   ├── replication_appl_164.sdi
+│       │   ├── replication_conn_155.sdi
+│       │   ├── replication_conn_157.sdi
+│       │   ├── replication_grou_156.sdi
+│       │   ├── replication_grou_162.sdi
+│       │   ├── rwlock_instances_94.sdi
+│       │   ├── session_account__144.sdi
+│       │   ├── session_connect__143.sdi
+│       │   ├── session_status_173.sdi
+│       │   ├── session_variable_176.sdi
+│       │   ├── setup_actors_95.sdi
+│       │   ├── setup_consumers_96.sdi
+│       │   ├── setup_instrument_97.sdi
+│       │   ├── setup_objects_98.sdi
+│       │   ├── setup_threads_99.sdi
+│       │   ├── socket_instances_140.sdi
+│       │   ├── socket_summary_b_141.sdi
+│       │   ├── socket_summary_b_142.sdi
+│       │   ├── status_by_accoun_168.sdi
+│       │   ├── status_by_host_169.sdi
+│       │   ├── status_by_thread_170.sdi
+│       │   ├── status_by_user_171.sdi
+│       │   ├── table_handles_151.sdi
+│       │   ├── table_io_waits_s_100.sdi
+│       │   ├── table_io_waits_s_101.sdi
+│       │   ├── table_lock_waits_102.sdi
+│       │   ├── threads_103.sdi
+│       │   ├── user_defined_fun_179.sdi
+│       │   ├── user_variables_b_167.sdi
+│       │   ├── users_137.sdi
+│       │   ├── variables_by_thr_174.sdi
+│       │   └── variables_info_177.sdi
+│       ├── photolist
+│       │   ├── photos.ibd
+│       │   ├── sessions.ibd
+│       │   ├── user_follows.ibd
+│       │   ├── user_photos_likes.ibd
+│       │   └── users.ibd
+│       ├── private_key.pem
+│       ├── public_key.pem
+│       ├── server-cert.pem
+│       ├── server-key.pem
+│       ├── sys
+│       │   └── sys_config.ibd
+│       ├── undo_001
+│       └── undo_002
+├── tree.txt
+└── vendor
+    ├── github.com
+    │   ├── 99designs
+    │   │   └── gqlgen
+    │   │       ├── LICENSE
+    │   │       ├── complexity
+    │   │       │   └── complexity.go
+    │   │       ├── graphql
+    │   │       │   ├── any.go
+    │   │       │   ├── bool.go
+    │   │       │   ├── context.go
+    │   │       │   ├── error.go
+    │   │       │   ├── exec.go
+    │   │       │   ├── fieldset.go
+    │   │       │   ├── float.go
+    │   │       │   ├── id.go
+    │   │       │   ├── int.go
+    │   │       │   ├── introspection
+    │   │       │   │   ├── introspection.go
+    │   │       │   │   ├── query.go
+    │   │       │   │   ├── schema.go
+    │   │       │   │   └── type.go
+    │   │       │   ├── jsonw.go
+    │   │       │   ├── map.go
+    │   │       │   ├── oneshot.go
+    │   │       │   ├── recovery.go
+    │   │       │   ├── response.go
+    │   │       │   ├── root.go
+    │   │       │   ├── string.go
+    │   │       │   ├── time.go
+    │   │       │   ├── tracer.go
+    │   │       │   ├── upload.go
+    │   │       │   └── version.go
+    │   │       └── handler
+    │   │           ├── context.go
+    │   │           ├── graphql.go
+    │   │           ├── mock.go
+    │   │           ├── playground.go
+    │   │           ├── stub.go
+    │   │           └── websocket.go
+    │   ├── agnivade
+    │   │   └── levenshtein
+    │   │       ├── License.txt
+    │   │       ├── Makefile
+    │   │       ├── README.md
+    │   │       ├── go.mod
+    │   │       └── levenshtein.go
+    │   ├── asaskevich
+    │   │   └── govalidator
+    │   │       ├── CONTRIBUTING.md
+    │   │       ├── LICENSE
+    │   │       ├── README.md
+    │   │       ├── arrays.go
+    │   │       ├── converter.go
+    │   │       ├── error.go
+    │   │       ├── numerics.go
+    │   │       ├── patterns.go
+    │   │       ├── types.go
+    │   │       ├── utils.go
+    │   │       ├── validator.go
+    │   │       └── wercker.yml
+    │   ├── dgrijalva
+    │   │   └── jwt-go
+    │   │       ├── LICENSE
+    │   │       ├── MIGRATION_GUIDE.md
+    │   │       ├── README.md
+    │   │       ├── VERSION_HISTORY.md
+    │   │       ├── claims.go
+    │   │       ├── doc.go
+    │   │       ├── ecdsa.go
+    │   │       ├── ecdsa_utils.go
+    │   │       ├── errors.go
+    │   │       ├── hmac.go
+    │   │       ├── map_claims.go
+    │   │       ├── none.go
+    │   │       ├── parser.go
+    │   │       ├── rsa.go
+    │   │       ├── rsa_pss.go
+    │   │       ├── rsa_utils.go
+    │   │       ├── signing_method.go
+    │   │       └── token.go
+    │   ├── disintegration
+    │   │   └── imaging
+    │   │       ├── LICENSE
+    │   │       ├── README.md
+    │   │       ├── adjust.go
+    │   │       ├── convolution.go
+    │   │       ├── doc.go
+    │   │       ├── effects.go
+    │   │       ├── go.mod
+    │   │       ├── go.sum
+    │   │       ├── histogram.go
+    │   │       ├── io.go
+    │   │       ├── resize.go
+    │   │       ├── scanner.go
+    │   │       ├── tools.go
+    │   │       ├── transform.go
+    │   │       └── utils.go
+    │   ├── go-sql-driver
+    │   │   └── mysql
+    │   │       ├── AUTHORS
+    │   │       ├── CHANGELOG.md
+    │   │       ├── CONTRIBUTING.md
+    │   │       ├── LICENSE
+    │   │       ├── README.md
+    │   │       ├── appengine.go
+    │   │       ├── auth.go
+    │   │       ├── buffer.go
+    │   │       ├── collations.go
+    │   │       ├── connection.go
+    │   │       ├── connection_go18.go
+    │   │       ├── const.go
+    │   │       ├── driver.go
+    │   │       ├── dsn.go
+    │   │       ├── errors.go
+    │   │       ├── fields.go
+    │   │       ├── infile.go
+    │   │       ├── packets.go
+    │   │       ├── result.go
+    │   │       ├── rows.go
+    │   │       ├── statement.go
+    │   │       ├── transaction.go
+    │   │       ├── utils.go
+    │   │       ├── utils_go17.go
+    │   │       └── utils_go18.go
+    │   ├── golang
+    │   │   └── protobuf
+    │   │       ├── AUTHORS
+    │   │       ├── CONTRIBUTORS
+    │   │       ├── LICENSE
+    │   │       └── proto
+    │   │           ├── clone.go
+    │   │           ├── decode.go
+    │   │           ├── deprecated.go
+    │   │           ├── discard.go
+    │   │           ├── encode.go
+    │   │           ├── equal.go
+    │   │           ├── extensions.go
+    │   │           ├── lib.go
+    │   │           ├── message_set.go
+    │   │           ├── pointer_reflect.go
+    │   │           ├── pointer_unsafe.go
+    │   │           ├── properties.go
+    │   │           ├── table_marshal.go
+    │   │           ├── table_merge.go
+    │   │           ├── table_unmarshal.go
+    │   │           ├── text.go
+    │   │           └── text_parser.go
+    │   ├── gorilla
+    │   │   └── websocket
+    │   │       ├── AUTHORS
+    │   │       ├── LICENSE
+    │   │       ├── README.md
+    │   │       ├── client.go
+    │   │       ├── client_clone.go
+    │   │       ├── client_clone_legacy.go
+    │   │       ├── compression.go
+    │   │       ├── conn.go
+    │   │       ├── conn_read.go
+    │   │       ├── conn_read_legacy.go
+    │   │       ├── doc.go
+    │   │       ├── json.go
+    │   │       ├── mask.go
+    │   │       ├── mask_safe.go
+    │   │       ├── prepared.go
+    │   │       ├── server.go
+    │   │       └── util.go
+    │   ├── hashicorp
+    │   │   └── golang-lru
+    │   │       ├── 2q.go
+    │   │       ├── LICENSE
+    │   │       ├── README.md
+    │   │       ├── arc.go
+    │   │       ├── doc.go
+    │   │       ├── go.mod
+    │   │       ├── lru.go
+    │   │       └── simplelru
+    │   │           ├── lru.go
+    │   │           └── lru_interface.go
+    │   ├── shurcooL
+    │   │   └── httpfs
+    │   │       ├── LICENSE
+    │   │       ├── html
+    │   │       │   └── vfstemplate
+    │   │       │       └── vfstemplate.go
+    │   │       ├── path
+    │   │       │   └── vfspath
+    │   │       │       └── match.go
+    │   │       ├── union
+    │   │       │   └── union.go
+    │   │       └── vfsutil
+    │   │           ├── file.go
+    │   │           ├── vfsutil.go
+    │   │           └── walk.go
+    │   └── vektah
+    │       └── gqlparser
+    │           ├── LICENSE
+    │           ├── ast
+    │           │   ├── argmap.go
+    │           │   ├── collections.go
+    │           │   ├── definition.go
+    │           │   ├── directive.go
+    │           │   ├── document.go
+    │           │   ├── dumper.go
+    │           │   ├── fragment.go
+    │           │   ├── operation.go
+    │           │   ├── selection.go
+    │           │   ├── source.go
+    │           │   ├── type.go
+    │           │   └── value.go
+    │           ├── go.mod
+    │           ├── go.sum
+    │           ├── gqlerror
+    │           │   └── error.go
+    │           ├── gqlparser.go
+    │           ├── lexer
+    │           │   ├── blockstring.go
+    │           │   ├── lexer.go
+    │           │   ├── lexer_test.yml
+    │           │   └── token.go
+    │           ├── parser
+    │           │   ├── parser.go
+    │           │   ├── query.go
+    │           │   ├── query_test.yml
+    │           │   ├── schema.go
+    │           │   └── schema_test.yml
+    │           ├── readme.md
+    │           └── validator
+    │               ├── error.go
+    │               ├── messaging.go
+    │               ├── prelude.go
+    │               ├── prelude.graphql
+    │               ├── rules
+    │               │   ├── fields_on_correct_type.go
+    │               │   ├── fragments_on_composite_types.go
+    │               │   ├── known_argument_names.go
+    │               │   ├── known_directives.go
+    │               │   ├── known_fragment_names.go
+    │               │   ├── known_type_names.go
+    │               │   ├── lone_anonymous_operation.go
+    │               │   ├── no_fragment_cycles.go
+    │               │   ├── no_undefined_variables.go
+    │               │   ├── no_unused_fragments.go
+    │               │   ├── no_unused_variables.go
+    │               │   ├── overlapping_fields_can_be_merged.go
+    │               │   ├── possible_fragment_spreads.go
+    │               │   ├── provided_required_arguments.go
+    │               │   ├── scalar_leafs.go
+    │               │   ├── single_field_subscriptions.go
+    │               │   ├── unique_argument_names.go
+    │               │   ├── unique_directives_per_location.go
+    │               │   ├── unique_fragment_names.go
+    │               │   ├── unique_input_field_names.go
+    │               │   ├── unique_operation_names.go
+    │               │   ├── unique_variable_names.go
+    │               │   ├── values_of_correct_type.go
+    │               │   ├── variables_are_input_types.go
+    │               │   └── variables_in_allowed_position.go
+    │               ├── schema.go
+    │               ├── schema_test.yml
+    │               ├── suggestionList.go
+    │               ├── validator.go
+    │               ├── vars.go
+    │               └── walk.go
+    ├── golang.org
+    │   └── x
+    │       ├── crypto
+    │       │   ├── AUTHORS
+    │       │   ├── CONTRIBUTORS
+    │       │   ├── LICENSE
+    │       │   ├── PATENTS
+    │       │   ├── argon2
+    │       │   │   ├── argon2.go
+    │       │   │   ├── blake2b.go
+    │       │   │   ├── blamka_amd64.go
+    │       │   │   ├── blamka_amd64.s
+    │       │   │   ├── blamka_generic.go
+    │       │   │   └── blamka_ref.go
+    │       │   └── blake2b
+    │       │       ├── blake2b.go
+    │       │       ├── blake2bAVX2_amd64.go
+    │       │       ├── blake2bAVX2_amd64.s
+    │       │       ├── blake2b_amd64.go
+    │       │       ├── blake2b_amd64.s
+    │       │       ├── blake2b_generic.go
+    │       │       ├── blake2b_ref.go
+    │       │       ├── blake2x.go
+    │       │       └── register.go
+    │       ├── image
+    │       │   ├── AUTHORS
+    │       │   ├── CONTRIBUTORS
+    │       │   ├── LICENSE
+    │       │   ├── PATENTS
+    │       │   ├── bmp
+    │       │   │   ├── reader.go
+    │       │   │   └── writer.go
+    │       │   └── tiff
+    │       │       ├── buffer.go
+    │       │       ├── compress.go
+    │       │       ├── consts.go
+    │       │       ├── lzw
+    │       │       │   └── reader.go
+    │       │       ├── reader.go
+    │       │       └── writer.go
+    │       ├── net
+    │       │   ├── AUTHORS
+    │       │   ├── CONTRIBUTORS
+    │       │   ├── LICENSE
+    │       │   ├── PATENTS
+    │       │   └── context
+    │       │       ├── context.go
+    │       │       ├── ctxhttp
+    │       │       │   └── ctxhttp.go
+    │       │       ├── go17.go
+    │       │       ├── go19.go
+    │       │       ├── pre_go17.go
+    │       │       └── pre_go19.go
+    │       ├── oauth2
+    │       │   ├── AUTHORS
+    │       │   ├── CONTRIBUTING.md
+    │       │   ├── CONTRIBUTORS
+    │       │   ├── LICENSE
+    │       │   ├── README.md
+    │       │   ├── go.mod
+    │       │   ├── go.sum
+    │       │   ├── internal
+    │       │   │   ├── client_appengine.go
+    │       │   │   ├── doc.go
+    │       │   │   ├── oauth2.go
+    │       │   │   ├── token.go
+    │       │   │   └── transport.go
+    │       │   ├── oauth2.go
+    │       │   ├── token.go
+    │       │   ├── transport.go
+    │       │   └── vk
+    │       │       └── vk.go
+    │       └── sys
+    │           ├── AUTHORS
+    │           ├── CONTRIBUTORS
+    │           ├── LICENSE
+    │           ├── PATENTS
+    │           └── cpu
+    │               ├── byteorder.go
+    │               ├── cpu.go
+    │               ├── cpu_arm.go
+    │               ├── cpu_gc_x86.go
+    │               ├── cpu_gccgo.c
+    │               ├── cpu_gccgo.go
+    │               ├── cpu_linux.go
+    │               ├── cpu_linux_arm64.go
+    │               ├── cpu_mips64x.go
+    │               ├── cpu_mipsx.go
+    │               ├── cpu_other_arm64.go
+    │               ├── cpu_ppc64x.go
+    │               ├── cpu_s390x.go
+    │               ├── cpu_x86.go
+    │               └── cpu_x86.s
+    ├── google.golang.org
+    │   └── appengine
+    │       ├── LICENSE
+    │       ├── cloudsql
+    │       │   ├── cloudsql.go
+    │       │   ├── cloudsql_classic.go
+    │       │   └── cloudsql_vm.go
+    │       ├── internal
+    │       │   ├── api.go
+    │       │   ├── api_classic.go
+    │       │   ├── api_common.go
+    │       │   ├── app_id.go
+    │       │   ├── base
+    │       │   │   ├── api_base.pb.go
+    │       │   │   └── api_base.proto
+    │       │   ├── datastore
+    │       │   │   ├── datastore_v3.pb.go
+    │       │   │   └── datastore_v3.proto
+    │       │   ├── identity.go
+    │       │   ├── identity_classic.go
+    │       │   ├── identity_flex.go
+    │       │   ├── identity_vm.go
+    │       │   ├── internal.go
+    │       │   ├── log
+    │       │   │   ├── log_service.pb.go
+    │       │   │   └── log_service.proto
+    │       │   ├── main.go
+    │       │   ├── main_common.go
+    │       │   ├── main_vm.go
+    │       │   ├── metadata.go
+    │       │   ├── net.go
+    │       │   ├── regen.sh
+    │       │   ├── remote_api
+    │       │   │   ├── remote_api.pb.go
+    │       │   │   └── remote_api.proto
+    │       │   ├── transaction.go
+    │       │   └── urlfetch
+    │       │       ├── urlfetch_service.pb.go
+    │       │       └── urlfetch_service.proto
+    │       └── urlfetch
+    │           └── urlfetch.go
+    └── modules.txt
+
+117 directories, 735 files

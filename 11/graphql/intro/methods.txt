@@ -1,0 +1,12 @@
+GET /cgi-bin/user/get_photos.pl?id=12
+POST /photos/upload.php
+POST /photos?action=upload
+POST /photos.upload
+PUT /api/v1/photos
+POST /api/v1/ + JSON-RPC
+
+/api/v1/photos?user_id=1234567890
+/api/v1/photos/{:user_id}
+/api/v1/photo/comments/{:photo_id}
+/api/v1/photo/{:photo_id}/comments
+/api/v1/photo/comments?photos_id=144

@@ -1,0 +1,35 @@
+.idea
+.DS_Store
+.vscode
+.vagrant
+*.exe
+bin
+solution_test.go
+solution.go
+solution*
+3/99_hw/rv_test.go
+
+# dont commit vendor in course assigments, gitlab works very bad on big number of files in MR
+vendor/
+
+# dont commit unpacked redditclone original frontend
+asperitas/
+asperitas-master/
+asperitas*/
+
+webinar_4/*/images/*.jpg
+*/photolist/*/images/*
+webinar_4/zk-multiple-kafka-single
+
+mem.out
+mem_out.txt
+cpu.out
+cpu_out.txt
+main.test
+main.test.exe
+pprof_1.exe
+pprof_2.exe
+tracing.exe
+codegen.exe
+goroutines.txt
+trace.out
