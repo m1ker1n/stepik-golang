@@ -127,7 +127,6 @@ func TestSigner(t *testing.T) {
 			for _, fibNum := range inputData {
 				out <- fibNum
 			}
-			close(out)
 		}),
 		job(SingleHash),
 		job(MultiHash),

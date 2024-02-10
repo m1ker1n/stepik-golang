@@ -2,21 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/xiegeo/coloredgoroutine"
-	"github.com/xiegeo/coloredgoroutine/goid"
-	"io"
-	"os"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 )
 
-var c io.Writer = coloredgoroutine.Colors(os.Stdout)
-
 func ExecutePipeline(hashSignJobs ...job) {
-	fmt.Fprintf(c, "procs=%d\n", runtime.GOMAXPROCS(0))
 	if len(hashSignJobs) == 0 {
 		return
 	}
@@ -25,13 +17,14 @@ func ExecutePipeline(hashSignJobs ...job) {
 	wg.Add(len(hashSignJobs))
 
 	chans := make([]chan interface{}, len(hashSignJobs)+1)
-	for i := 1; i < len(chans)-1; i++ {
+	for i := 1; i < len(chans); i++ {
 		chans[i] = make(chan interface{}, MaxInputDataLen)
 	}
 
 	for i := 0; i < len(chans)-1; i++ {
 		go func(i int, in, out chan interface{}) {
 			hashSignJobs[i](in, out)
+			close(out)
 			wg.Done()
 		}(i, chans[i], chans[i+1])
 	}
@@ -49,38 +42,39 @@ func SingleHash(in chan interface{}, out chan interface{}) {
 			return
 		}
 		strData := strconv.Itoa(intData)
-		fmt.Fprintf(c, "[%d] %s SingleHash data %s\n", goid.ID(), strData, strData)
+		fmt.Printf("%s SingleHash data %s\n", strData, strData)
 
 		wg.Add(1)
-
-		md5 := make(chan string)
 		go func() {
-			md5Mu.Lock()
-			md5 <- DataSignerMd5(strData)
-			md5Mu.Unlock()
-		}()
+			md5 := make(chan string)
+			go func() {
+				md5Mu.Lock()
+				md5 <- DataSignerMd5(strData)
+				md5Mu.Unlock()
+			}()
 
-		crc32 := make(chan string)
-		go func() {
-			crc32 <- DataSignerCrc32(strData)
-		}()
+			crc32 := make(chan string)
+			go func() {
+				crc32 <- DataSignerCrc32(strData)
+			}()
 
-		crc32Md5 := make(chan string)
-		go func() {
-			md5Res := <-md5
-			fmt.Fprintf(c, "[%d] %s SingleHash md5(data) %s\n", goid.ID(), strData, md5Res)
-			crc32Md5 <- DataSignerCrc32(md5Res)
-		}()
+			crc32Md5 := make(chan string)
+			go func() {
+				md5Res := <-md5
+				fmt.Printf("%s SingleHash md5(data) %s\n", strData, md5Res)
+				crc32Md5 <- DataSignerCrc32(md5Res)
+			}()
 
-		crc32Res := <-crc32
-		fmt.Fprintf(c, "[%d] %s SingleHash crc32(data) %s\n", goid.ID(), strData, crc32Res)
-		crc32Md5Res := <-crc32Md5
-		fmt.Fprintf(c, "[%d] %s SingleHash crc32(md5(data)) %s\n", goid.ID(), strData, crc32Md5Res)
-		out <- crc32Res + "~" + crc32Md5Res
-		wg.Done()
+			crc32Res := <-crc32
+			fmt.Printf("%s SingleHash crc32(data) %s\n", strData, crc32Res)
+			crc32Md5Res := <-crc32Md5
+			fmt.Printf("%s SingleHash crc32(md5(data)) %s\n", strData, crc32Md5Res)
+			out <- crc32Res + "~" + crc32Md5Res
+
+			wg.Done()
+		}()
 	}
 	wg.Wait()
-	close(out)
 }
 
 func MultiHash(in chan interface{}, out chan interface{}) {
@@ -100,20 +94,19 @@ func MultiHash(in chan interface{}, out chan interface{}) {
 			for i := 0; i < 6; i++ {
 				go func(i int) {
 					hashes[i] = DataSignerCrc32(strconv.Itoa(i) + strData)
-					fmt.Fprintf(c, "[%d] %s MultiHash crc32(th+step1) %d %s\n", goid.ID(), strData, i, hashes[i])
+					fmt.Printf("%s MultiHash crc32(th+step1) %d %s\n", strData, i, hashes[i])
 					wgHashes.Done()
 				}(i)
 			}
 
 			wgHashes.Wait()
 			res := strings.Join(hashes, "")
-			fmt.Fprintf(c, "[%d] %s MultiHash result %s\n", goid.ID(), strData, res)
+			fmt.Printf("%s MultiHash result %s\n", strData, res)
 			out <- res
 			wg.Done()
 		}()
 	}
 	wg.Wait()
-	close(out)
 }
 
 func CombineResults(in chan interface{}, out chan interface{}) {
@@ -127,7 +120,6 @@ func CombineResults(in chan interface{}, out chan interface{}) {
 	}
 	sort.Strings(data)
 	res := strings.Join(data, "_")
-	fmt.Fprintf(c, "[%d] CombineResults %s\n", goid.ID(), res)
+	fmt.Printf("CombineResults %s\n", res)
 	out <- res
-	close(out)
 }
