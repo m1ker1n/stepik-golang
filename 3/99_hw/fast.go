@@ -21,7 +21,7 @@ func FastSearch(out io.Writer) {
 	r := regexp.MustCompile("@")
 	seenBrowsers := []string{}
 	uniqueBrowsers := 0
-	foundUsers := ""
+	var foundUsersBuilder strings.Builder
 
 	for i := 0; scanner.Scan(); i++ {
 		var u user.User
@@ -74,12 +74,12 @@ func FastSearch(out io.Writer) {
 
 		// log.Println("Android and MSIE user:", u.Name, u.Email)
 		email := r.ReplaceAllString(u.Email, " [at] ")
-		foundUsers += fmt.Sprintf("[%d] %s <%s>\n", i, u.Name, email)
+		foundUsersBuilder.WriteString(fmt.Sprintf("[%d] %s <%s>\n", i, u.Name, email))
 	}
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
 
-	fmt.Fprintln(out, "found users:\n"+foundUsers)
+	fmt.Fprintln(out, "found users:\n"+foundUsersBuilder.String())
 	fmt.Fprintln(out, "Total unique browsers", len(seenBrowsers))
 }
