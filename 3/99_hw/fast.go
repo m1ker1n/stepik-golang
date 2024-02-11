@@ -7,7 +7,6 @@ import (
 	"hw3/user"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -18,7 +17,6 @@ func FastSearch(out io.Writer) {
 	}
 	scanner := bufio.NewScanner(file)
 
-	r := regexp.MustCompile("@")
 	seenBrowsers := map[string]bool{}
 	var foundUsersBuilder strings.Builder
 
@@ -56,7 +54,7 @@ func FastSearch(out io.Writer) {
 		}
 
 		// log.Println("Android and MSIE user:", u.Name, u.Email)
-		email := r.ReplaceAllString(u.Email, " [at] ")
+		email := strings.ReplaceAll(u.Email, "@", " [at] ")
 		foundUsersBuilder.WriteString(fmt.Sprintf("[%d] %s <%s>\n", i, u.Name, email))
 	}
 	if err := scanner.Err(); err != nil {

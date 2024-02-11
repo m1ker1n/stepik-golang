@@ -148,3 +148,22 @@ func BenchmarkReadByLine(b *testing.B) {
 		}
 	}
 }
+
+const (
+	email       = "m1ker1nigor@yandex.ru"
+	replaceable = "@"
+	replacement = " [at] "
+)
+
+func BenchmarkReplaceByRegexp(b *testing.B) {
+	r := regexp.MustCompile(replaceable)
+	for i := 0; i < b.N; i++ {
+		r.ReplaceAllString(email, replacement)
+	}
+}
+
+func BenchmarkReplaceByStrings(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		strings.ReplaceAll(email, replaceable, replacement)
+	}
+}
