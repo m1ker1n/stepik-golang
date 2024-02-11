@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/mailru/easyjson"
+	"hw3/user"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -76,14 +78,21 @@ const unmarshalData = `{"browsers":["Mozilla/5.0 (X11; Linux x86_64) AppleWebKit
 
 func BenchmarkUnmarshalToMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		user := make(map[string]interface{})
-		_ = json.Unmarshal([]byte(unmarshalData), &user)
+		u := make(map[string]interface{})
+		_ = json.Unmarshal([]byte(unmarshalData), &u)
 	}
 }
 
 func BenchmarkUnmarshalToStruct(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		var user User
-		_ = json.Unmarshal([]byte(unmarshalData), &user)
+		var u user.User
+		_ = json.Unmarshal([]byte(unmarshalData), &u)
+	}
+}
+
+func BenchmarkEasyjsonUnmarshal(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var u user.User
+		_ = easyjson.Unmarshal([]byte(unmarshalData), &u)
 	}
 }

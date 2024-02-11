@@ -78,3 +78,11 @@ go tool pprof -http=:8080 .\hw3.test.exe .\mem.out
 После исправления в коде: 
 
 ![img_14.png](img_14.png)
+
+3. Использование другого Unmarshaler'а, использующего кодогенерацию, в данном случае `github.com/mailru/easyjson` улучшает работоспособность еще больше:
+
+![img_15.png](img_15.png)
+
+После исправления в коде: 
+
+![img_16.png](img_16.png)
