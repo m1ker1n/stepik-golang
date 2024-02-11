@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"github.com/mailru/easyjson"
 	"hw3/user"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -94,5 +96,40 @@ func BenchmarkEasyjsonUnmarshal(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var u user.User
 		_ = easyjson.Unmarshal([]byte(unmarshalData), &u)
+	}
+}
+
+func BenchmarkReadAll(b *testing.B) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	for i := 0; i < b.N; i++ {
+		fileContents, err := ioutil.ReadAll(file)
+		if err != nil {
+			panic(err)
+		}
+
+		lines := strings.Split(string(fileContents), "\n")
+
+		for range lines {
+		}
+	}
+}
+
+func BenchmarkReadByLine(b *testing.B) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	for i := 0; i < b.N; i++ {
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			_ = scanner.Text()
+		}
+		if err := scanner.Err(); err != nil {
+			panic(err)
+		}
 	}
 }
