@@ -65,3 +65,6 @@ go tool pprof -http=:8080 .\hw3.test.exe .\mem.out
 
 ![img_11.png](img_11.png)
 
+После исправления получили следующие результаты: 
+
+![img_12.png](img_12.png)
