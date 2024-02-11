@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -69,5 +70,21 @@ func BenchmarkStringsContains(b *testing.B) {
 	browser := "123Android5363"
 	for i := 0; i < b.N; i++ {
 		strings.Contains(browser, pattern)
+	}
+}
+
+const unmarshalData = `{"browsers":["Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.32 (KHTML, like Gecko) Chromium/25.0.1349.2 Chrome/25.0.1349.2 Safari/537.32 Epiphany/3.8.2","Wget/1.9 cvs-stable (Red Hat modified)","Mozilla/3.0 (compatible; NetPositive/2.1.1; BeOS)","Mozilla/5.0 (X11; Linux 3.8-6.dmz.1-liquorix-686) KHTML/4.8.4 (like Gecko) Konqueror/4.8"],"company":"Meevee","country":"Fiji","email":"CarolynReyes@Mydeo.name","job":"Librarian","name":"Steven Burton","phone":"420-22-74"}`
+
+func BenchmarkUnmarshalToMap(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		user := make(map[string]interface{})
+		_ = json.Unmarshal([]byte(unmarshalData), &user)
+	}
+}
+
+func BenchmarkUnmarshalToStruct(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var user User
+		_ = json.Unmarshal([]byte(unmarshalData), &user)
 	}
 }

@@ -10,7 +10,16 @@ import (
 	"strings"
 )
 
-// вам надо написать более быструю оптимальную этой функции
+type User struct {
+	Browsers []string `json:"browsers"`
+	Company  string   `json:"company"`
+	Country  string   `json:"country"`
+	Email    string   `json:"email"`
+	Job      string   `json:"job"`
+	Name     string   `json:"name"`
+	Phone    string   `json:"phone"`
+}
+
 func FastSearch(out io.Writer) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -29,9 +38,9 @@ func FastSearch(out io.Writer) {
 
 	lines := strings.Split(string(fileContents), "\n")
 
-	users := make([]map[string]interface{}, 0)
+	users := make([]User, 0)
 	for _, line := range lines {
-		user := make(map[string]interface{})
+		var user User
 		// fmt.Printf("%v %v\n", err, line)
 		err := json.Unmarshal([]byte(line), &user)
 		if err != nil {
@@ -45,18 +54,7 @@ func FastSearch(out io.Writer) {
 		isAndroid := false
 		isMSIE := false
 
-		browsers, ok := user["browsers"].([]interface{})
-		if !ok {
-			// log.Println("cant cast browsers")
-			continue
-		}
-
-		for _, browserRaw := range browsers {
-			browser, ok := browserRaw.(string)
-			if !ok {
-				// log.Println("cant cast browser to string")
-				continue
-			}
+		for _, browser := range user.Browsers {
 			if strings.Contains(browser, "Android") {
 				isAndroid = true
 				notSeenBefore := true
@@ -66,19 +64,14 @@ func FastSearch(out io.Writer) {
 					}
 				}
 				if notSeenBefore {
-					// log.Printf("SLOW New browser: %s, first seen: %s", browser, user["name"])
+					// log.Printf("FAST New browser: %s, first seen: %s", browser, user.Name)
 					seenBrowsers = append(seenBrowsers, browser)
 					uniqueBrowsers++
 				}
 			}
 		}
 
-		for _, browserRaw := range browsers {
-			browser, ok := browserRaw.(string)
-			if !ok {
-				// log.Println("cant cast browser to string")
-				continue
-			}
+		for _, browser := range user.Browsers {
 			if strings.Contains(browser, "MSIE") {
 				isMSIE = true
 				notSeenBefore := true
@@ -88,7 +81,7 @@ func FastSearch(out io.Writer) {
 					}
 				}
 				if notSeenBefore {
-					// log.Printf("SLOW New browser: %s, first seen: %s", browser, user["name"])
+					// log.Printf("FAST New browser: %s, first seen: %s", browser, user.Name)
 					seenBrowsers = append(seenBrowsers, browser)
 					uniqueBrowsers++
 				}
@@ -99,9 +92,9 @@ func FastSearch(out io.Writer) {
 			continue
 		}
 
-		// log.Println("Android and MSIE user:", user["name"], user["email"])
-		email := r.ReplaceAllString(user["email"].(string), " [at] ")
-		foundUsers += fmt.Sprintf("[%d] %s <%s>\n", i, user["name"], email)
+		// log.Println("Android and MSIE user:", user.Name, user.Email)
+		email := r.ReplaceAllString(user.Email, " [at] ")
+		foundUsers += fmt.Sprintf("[%d] %s <%s>\n", i, user.Name, email)
 	}
 
 	fmt.Fprintln(out, "found users:\n"+foundUsers)
