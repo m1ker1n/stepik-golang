@@ -48,17 +48,18 @@ func BenchmarkFast(b *testing.B) {
 	}
 }
 
+const (
+	pattern = "Android"
+	browser = "123Android5363"
+)
+
 func BenchmarkRegexpMatchString(b *testing.B) {
-	pattern := "Android"
-	browser := "123Android5363"
 	for i := 0; i < b.N; i++ {
 		_, _ = regexp.MatchString(pattern, browser)
 	}
 }
 
 func BenchmarkPrecompiledRegexpMatchString(b *testing.B) {
-	pattern := "Android"
-	browser := "123Android5363"
 	r := regexp.MustCompile(pattern)
 	for i := 0; i < b.N; i++ {
 		r.MatchString(browser)
@@ -66,8 +67,6 @@ func BenchmarkPrecompiledRegexpMatchString(b *testing.B) {
 }
 
 func BenchmarkStringsContains(b *testing.B) {
-	pattern := "Android"
-	browser := "123Android5363"
 	for i := 0; i < b.N; i++ {
 		strings.Contains(browser, pattern)
 	}
