@@ -23,21 +23,13 @@ func FastSearch(out io.Writer) {
 	uniqueBrowsers := 0
 	foundUsers := ""
 
-	users := make([]user.User, 0)
-	for scanner.Scan() {
+	for i := 0; scanner.Scan(); i++ {
 		var u user.User
 		// fmt.Printf("%v %v\n", err, line)
 		err := easyjson.Unmarshal(scanner.Bytes(), &u)
 		if err != nil {
 			panic(err)
 		}
-		users = append(users, u)
-	}
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
-
-	for i, u := range users {
 
 		isAndroid := false
 		isMSIE := false
@@ -83,6 +75,9 @@ func FastSearch(out io.Writer) {
 		// log.Println("Android and MSIE user:", u.Name, u.Email)
 		email := r.ReplaceAllString(u.Email, " [at] ")
 		foundUsers += fmt.Sprintf("[%d] %s <%s>\n", i, u.Name, email)
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
 	}
 
 	fmt.Fprintln(out, "found users:\n"+foundUsers)
