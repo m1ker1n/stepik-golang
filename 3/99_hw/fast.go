@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/mailru/easyjson"
 	"hw3/user"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -16,28 +16,25 @@ func FastSearch(out io.Writer) {
 	if err != nil {
 		panic(err)
 	}
-
-	fileContents, err := ioutil.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
+	scanner := bufio.NewScanner(file)
 
 	r := regexp.MustCompile("@")
 	seenBrowsers := []string{}
 	uniqueBrowsers := 0
 	foundUsers := ""
 
-	lines := strings.Split(string(fileContents), "\n")
-
 	users := make([]user.User, 0)
-	for _, line := range lines {
+	for scanner.Scan() {
 		var u user.User
 		// fmt.Printf("%v %v\n", err, line)
-		err := easyjson.Unmarshal([]byte(line), &u)
+		err := easyjson.Unmarshal(scanner.Bytes(), &u)
 		if err != nil {
 			panic(err)
 		}
 		users = append(users, u)
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
 	}
 
 	for i, u := range users {
