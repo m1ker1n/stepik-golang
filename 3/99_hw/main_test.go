@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -42,5 +44,30 @@ func BenchmarkSlow(b *testing.B) {
 func BenchmarkFast(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FastSearch(ioutil.Discard)
+	}
+}
+
+func BenchmarkRegexpMatchString(b *testing.B) {
+	pattern := "Android"
+	browser := "123Android5363"
+	for i := 0; i < b.N; i++ {
+		_, _ = regexp.MatchString(pattern, browser)
+	}
+}
+
+func BenchmarkPrecompiledRegexpMatchString(b *testing.B) {
+	pattern := "Android"
+	browser := "123Android5363"
+	r := regexp.MustCompile(pattern)
+	for i := 0; i < b.N; i++ {
+		r.MatchString(browser)
+	}
+}
+
+func BenchmarkStringsContains(b *testing.B) {
+	pattern := "Android"
+	browser := "123Android5363"
+	for i := 0; i < b.N; i++ {
+		strings.Contains(browser, pattern)
 	}
 }
