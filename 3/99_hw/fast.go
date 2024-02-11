@@ -19,8 +19,7 @@ func FastSearch(out io.Writer) {
 	scanner := bufio.NewScanner(file)
 
 	r := regexp.MustCompile("@")
-	seenBrowsers := []string{}
-	uniqueBrowsers := 0
+	seenBrowsers := map[string]bool{}
 	var foundUsersBuilder strings.Builder
 
 	for i := 0; scanner.Scan(); i++ {
@@ -37,33 +36,17 @@ func FastSearch(out io.Writer) {
 		for _, browser := range u.Browsers {
 			if strings.Contains(browser, "Android") {
 				isAndroid = true
-				notSeenBefore := true
-				for _, item := range seenBrowsers {
-					if item == browser {
-						notSeenBefore = false
-					}
-				}
-				if notSeenBefore {
+				if _, seenBefore := seenBrowsers[browser]; !seenBefore {
 					// log.Printf("FAST New browser: %s, first seen: %s", browser, u.Name)
-					seenBrowsers = append(seenBrowsers, browser)
-					uniqueBrowsers++
+					seenBrowsers[browser] = true
 				}
 			}
-		}
 
-		for _, browser := range u.Browsers {
 			if strings.Contains(browser, "MSIE") {
 				isMSIE = true
-				notSeenBefore := true
-				for _, item := range seenBrowsers {
-					if item == browser {
-						notSeenBefore = false
-					}
-				}
-				if notSeenBefore {
+				if _, seenBefore := seenBrowsers[browser]; !seenBefore {
 					// log.Printf("FAST New browser: %s, first seen: %s", browser, u.Name)
-					seenBrowsers = append(seenBrowsers, browser)
-					uniqueBrowsers++
+					seenBrowsers[browser] = true
 				}
 			}
 		}
