@@ -100,11 +100,11 @@ func BenchmarkEasyjsonUnmarshal(b *testing.B) {
 }
 
 func BenchmarkReadAll(b *testing.B) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
 	for i := 0; i < b.N; i++ {
+		file, err := os.Open(filePath)
+		if err != nil {
+			panic(err)
+		}
 		fileContents, err := ioutil.ReadAll(file)
 		if err != nil {
 			panic(err)
@@ -112,21 +112,36 @@ func BenchmarkReadAll(b *testing.B) {
 
 		lines := strings.Split(string(fileContents), "\n")
 
-		for range lines {
+		users := make([]user.User, 0)
+		for _, line := range lines {
+			var u user.User
+			// fmt.Printf("%v %v\n", err, line)
+			err := easyjson.Unmarshal([]byte(line), &u)
+			if err != nil {
+				panic(err)
+			}
+			users = append(users, u)
 		}
 	}
 }
 
 func BenchmarkReadByLine(b *testing.B) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
 	for i := 0; i < b.N; i++ {
+		file, err := os.Open(filePath)
+		if err != nil {
+			panic(err)
+		}
 		scanner := bufio.NewScanner(file)
 
+		users := make([]user.User, 0)
 		for scanner.Scan() {
-			_ = scanner.Text()
+			var u user.User
+			// fmt.Printf("%v %v\n", err, line)
+			err := easyjson.Unmarshal(scanner.Bytes(), &u)
+			if err != nil {
+				panic(err)
+			}
+			users = append(users, u)
 		}
 		if err := scanner.Err(); err != nil {
 			panic(err)
