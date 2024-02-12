@@ -2,11 +2,14 @@ package main
 
 import (
 	"cmp"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -47,6 +50,10 @@ func (r Row) ToUser() User {
 	}
 }
 
+type Server struct {
+	Users []User
+}
+
 func main() {
 	file, err := os.ReadFile(datasetPath)
 	if err != nil {
@@ -67,11 +74,99 @@ func main() {
 		return res
 	}(dataset.Rows)
 
-	res, err := searchServer(users, "eu", "Age", OrderByDesc, 100, 0)
+	s := Server{Users: users}
+
+	http.HandleFunc("/", s.SearchServer)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%#v", res)
+}
+
+func (s *Server) SearchServer(w http.ResponseWriter, r *http.Request) {
+	accessToken := r.Header.Get("AccessToken")
+	if accessToken == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	params, err := receiveSearchRequest(r)
+	if err != nil {
+		response := SearchErrorResponse{err.Error()}
+		marshalledResponse, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(marshalledResponse)
+		return
+	}
+
+	results, err := searchServer(
+		s.Users,
+		params.Query,
+		params.OrderField,
+		params.OrderBy,
+		params.Limit,
+		params.Offset,
+	)
+	if err != nil {
+		response := SearchErrorResponse{err.Error()}
+		marshalledResponse, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(marshalledResponse)
+		return
+	}
+
+	marshalledResults, err := json.Marshal(results)
+	if err != nil {
+		panic(fmt.Errorf("cannot pack results into json: %w", err))
+	}
+
+	_, _ = w.Write(marshalledResults)
+}
+
+func receiveSearchRequest(r *http.Request) (SearchRequest, error) {
+	errs := make([]error, 0, 3)
+
+	query := r.FormValue("query")
+	orderField := r.FormValue("order_field")
+	orderBy, err := strconv.Atoi(r.FormValue("order_by"))
+	if err != nil {
+		errs = append(errs, fmt.Errorf("could not parse order_by: %w", err))
+	}
+	limit, err := strconv.Atoi(r.FormValue("limit"))
+	if err != nil {
+		// cannot parse to int
+		errs = append(errs, fmt.Errorf("could not parse limit: %w", err))
+	}
+	offset, err := strconv.Atoi(r.FormValue("offset"))
+	if err != nil {
+		// cannot parse to int
+		errs = append(errs, fmt.Errorf("could not parse offset: %w", err))
+	}
+
+	var resErr error = nil
+	if len(errs) != 0 {
+		errsStr := ""
+		for _, err = range errs {
+			errsStr += err.Error() + ";"
+		}
+		resErr = errors.New(errsStr)
+	}
+
+	return SearchRequest{
+		Limit:      limit,
+		Offset:     offset,
+		Query:      query,
+		OrderField: orderField,
+		OrderBy:    orderBy,
+	}, resErr
 }
 
 // searchServer creates its own slice of users
