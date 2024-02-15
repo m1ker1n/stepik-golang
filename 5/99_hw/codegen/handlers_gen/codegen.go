@@ -16,8 +16,9 @@ import (
 	"text/template"
 )
 
-const CodegenLabel = `// apigen:api `
+const CodegenLabelPrefix = `// apigen:api `
 const FuncWrapperPrefix = `wrapper`
+const ApiValidatorTagPrefix = `apivalidator:"`
 
 type CodegenOptions struct {
 	Url    string `json:"url"`
@@ -32,6 +33,8 @@ type FuncWrapper struct {
 	IsStarReceiver bool
 	RecvTypeName   string
 	FuncName       string
+
+	Input FuncInput
 
 	Options CodegenOptions
 }
@@ -56,9 +59,9 @@ func NewFuncWrapper(f *ast.FuncDecl) (*FuncWrapper, error) {
 
 	var options CodegenOptions
 	codegenOptionLine := generics.Filter(f.Doc.List, func(comment *ast.Comment) bool {
-		return strings.Contains(comment.Text, CodegenLabel)
+		return strings.Contains(comment.Text, CodegenLabelPrefix)
 	})[0]
-	codegenOptionsJson, ok := strings.CutPrefix(codegenOptionLine.Text, CodegenLabel)
+	codegenOptionsJson, ok := strings.CutPrefix(codegenOptionLine.Text, CodegenLabelPrefix)
 	if !ok {
 		return nil, errors.New("codegen options are not provided")
 	}
@@ -70,18 +73,36 @@ func NewFuncWrapper(f *ast.FuncDecl) (*FuncWrapper, error) {
 		options.Method = http.MethodGet
 	}
 
+	input, err := FuncDeclToFuncInput(f)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse input of function")
+	}
+
 	return &FuncWrapper{
 		Decl:           f,
 		RecvName:       f.Recv.List[0].Names[0].Name,
 		IsStarReceiver: isStarReceiver,
 		RecvTypeName:   recvTypeName,
 		FuncName:       f.Name.Name,
+		Input:          input,
 		Options:        options,
 	}, nil
 }
 
 func (f *FuncWrapper) WrapperFuncName() string {
 	return FuncWrapperPrefix + f.FuncName
+}
+
+type FuncInput struct {
+	RecvTypeName string
+	Fields       []FuncInputStructField
+}
+
+type FuncInputStructField struct {
+	Name                   string
+	Type                   string
+	ApiValidatorTagContent string
+	Validations            []string
 }
 
 // ServeHTTPWrapper always will create function with star receiver
@@ -251,7 +272,7 @@ func DeclToFuncDecl(d ast.Decl) (*ast.FuncDecl, error) {
 		return nil, errors.New("can't cast ast.Decl to *ast.FuncDecl")
 	}
 
-	if !DeclContains1CodegenLabel(r, CodegenLabel) {
+	if !DeclContains1CodegenLabel(r, CodegenLabelPrefix) {
 		return nil, errors.New("func has 2 codegen labels, must be only 1")
 	}
 
@@ -301,4 +322,40 @@ func DeclHasReceiver(d *ast.FuncDecl) bool {
 	}
 
 	return true
+}
+
+func FuncDeclToFuncInput(f *ast.FuncDecl) (FuncInput, error) {
+	//first parameter is context
+	ident, _ := (f.Type.Params.List[1].Type).(*ast.Ident)
+	typeSpec, _ := (ident.Obj.Decl).(*ast.TypeSpec)
+	structType, _ := (typeSpec.Type).(*ast.StructType)
+
+	result := FuncInput{
+		RecvTypeName: ident.Name,
+	}
+
+	fields := make([]FuncInputStructField, 0, len(structType.Fields.List))
+	for _, field := range structType.Fields.List {
+		fieldTypeAsIdent, _ := (field.Type).(*ast.Ident)
+		switch fieldTypeAsIdent.Name {
+		case "int", "string":
+		default:
+			continue
+		}
+
+		_, afterTag, ok := strings.Cut(field.Tag.Value, ApiValidatorTagPrefix)
+		if !ok {
+			continue
+		}
+		tagContent, _, ok := strings.Cut(afterTag, `"`)
+
+		fields = append(fields, FuncInputStructField{
+			Name:                   field.Names[0].Name,
+			Type:                   fieldTypeAsIdent.Name,
+			ApiValidatorTagContent: tagContent,
+			Validations:            strings.Split(tagContent, ","),
+		})
+	}
+	result.Fields = fields
+	return result, nil
 }
