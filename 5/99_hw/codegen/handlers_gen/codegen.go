@@ -98,30 +98,62 @@ var (
 		`package {{.}}
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 )`))
+
+	varsTmpl = template.Must(template.New("varsTmpl").Parse(
+		`var (
+	errUnauthorized = errors.New("unauthorized")
+	errNotFound = errors.New("unknown method")
+	errStatusNotAcceptable = errors.New("bad method")
+)`))
+
+	typesTmpl = template.Must(template.New("typesTmpl").Parse(strings.ReplaceAll(
+		`type httpResponse struct {
+	Err      string ♂json:"error"♂
+	Response any    ♂json:"response,omitempty"♂
+}
+
+func (r httpResponse) write(w http.ResponseWriter, status int) {
+	marshal, _ := json.Marshal(r)
+	w.WriteHeader(status)
+	_, _ = w.Write(marshal)
+}`, `♂`, "`")))
 
 	serveHTTPTmpl = template.Must(template.New("serveHTTPTmpl").Parse(
 		`func ({{$serveRecvName := .RecvName}}{{$serveRecvName}} *{{.RecvTypeName}}) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path { {{range $url, $methods := .Wrappers}}
 	case "{{$url}}":
 		switch r.Method { {{range $method, $wrapper := $methods}}
-		case "GET":
+		case "{{$method}}":
 			{{$serveRecvName}}.{{$wrapper.WrapperFuncName}}(w, r){{end}}
 		default:
-			http.NotFound(w, r)
+			httpResponse{Err: errStatusNotAcceptable.Error()}.write(w, http.StatusNotAcceptable)
 		}{{end}}
 	default:
-		http.NotFound(w, r)
+		httpResponse{Err: errNotFound.Error()}.write(w, http.StatusNotFound)
 	}
 }`))
 
 	funcTmpl = template.Must(template.New("wrapperTmpl").Parse(
 		`func ({{.RecvName}} {{if .IsStarReceiver}}*{{end}}{{.RecvTypeName}}) {{.WrapperFuncName}}(w http.ResponseWriter, r *http.Request) { {{if .Options.Auth}}
-	//auth{{end}}
+	if authorized := auth(w, r); !authorized {
+		return
+	}{{end}}
 	//get&validate
 	//call {{.RecvName}}.{{.WrapperFuncName}}(r.Context(), in)
 	//return results
+}`))
+
+	authTmpl = template.Must(template.New("authTmpl").Parse(
+		`func auth(w http.ResponseWriter, r *http.Request) bool {
+	if r.Header.Get("X-Auth") != "100500" {
+		httpResponse{Err: errUnauthorized.Error()}.write(w, http.StatusForbidden)
+		return false
+	}
+	return true
 }`))
 )
 
@@ -137,12 +169,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = packageImportsTmpl.Execute(out, node.Name.Name)
-	if err != nil {
-		log.Fatal(err)
-	}
-	newLines(out, 2)
-
 	funcDecls := generics.Map(node.Decls, DeclToFuncDecl)
 	funcWrappers, err := generics.TryMap(funcDecls, NewFuncWrapper)
 	if err != nil {
@@ -153,14 +179,12 @@ func main() {
 	for _, f := range funcWrappers {
 		if _, serveHTTPWrapperExists := serveWrappers[f.RecvTypeName]; !serveHTTPWrapperExists {
 			serveWrappers[f.RecvTypeName] = &ServeHTTPWrapper{
+				RecvName:     f.RecvName,
 				RecvTypeName: f.RecvTypeName,
 				Wrappers:     make(map[string]map[string]*FuncWrapper),
 			}
 		}
 		curServeWrapper := serveWrappers[f.RecvTypeName]
-		if curServeWrapper.RecvName == "" && f.RecvName != "" {
-			curServeWrapper.RecvName = f.RecvName
-		}
 
 		if _, groupByUrlExists := curServeWrapper.Wrappers[f.Options.Url]; !groupByUrlExists {
 			curServeWrapper.Wrappers[f.Options.Url] = make(map[string]*FuncWrapper)
@@ -172,6 +196,24 @@ func main() {
 		}
 		curUrl[f.Options.Method] = f
 	}
+
+	err = packageImportsTmpl.Execute(out, node.Name.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	newLines(out, 2)
+
+	err = varsTmpl.Execute(out, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	newLines(out, 2)
+
+	err = typesTmpl.Execute(out, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	newLines(out, 2)
 
 	for _, serveWrapper := range serveWrappers {
 		err := serveHTTPTmpl.Execute(out, serveWrapper)
@@ -188,6 +230,12 @@ func main() {
 		}
 		newLines(out, 2)
 	}
+
+	err = authTmpl.Execute(out, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	newLines(out, 2)
 
 	fmt.Printf("%#v", serveWrappers)
 }
