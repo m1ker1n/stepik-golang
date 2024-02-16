@@ -20,6 +20,11 @@ const CodegenLabelPrefix = `// apigen:api `
 const FuncWrapperPrefix = `wrapper`
 const ApiValidatorTagPrefix = `apivalidator:"`
 
+type Template struct {
+	Package       string
+	ServeWrappers map[string]*ServeHTTPWrapper
+}
+
 type CodegenOptions struct {
 	Url    string `json:"url"`
 	Auth   bool   `json:"auth"`
@@ -99,10 +104,90 @@ type FuncInput struct {
 }
 
 type FuncInputStructField struct {
+	RecvTypeName string
+
 	Name                   string
-	Type                   string
+	IsInt                  bool
 	ApiValidatorTagContent string
-	Validations            []string
+
+	IsRequired bool
+
+	HasParamname bool
+	Paramname    string
+
+	HasEnums bool
+	Enums    []string
+
+	HasDefault bool
+	Default    string
+
+	HasMin bool
+	Min    string
+
+	HasMax bool
+	Max    string
+}
+
+func (f FuncInputStructField) VarName() string {
+	return strings.ToLower(f.Name)
+}
+
+func (f FuncInputStructField) EnumList() string {
+	return strings.Join(f.Enums, `","`)
+}
+
+func (f FuncInputStructField) EnumListToError() string {
+	return fmt.Sprintf("[%s]", strings.Join(f.Enums, ", "))
+}
+
+func NewFuncInputStructField(recvTypeName string, name string, isInt bool, tagContent string) (FuncInputStructField, error) {
+	result := FuncInputStructField{
+		RecvTypeName:           recvTypeName,
+		Name:                   name,
+		IsInt:                  isInt,
+		ApiValidatorTagContent: tagContent,
+	}
+
+	validations := strings.Split(tagContent, ",")
+	for _, validation := range validations {
+		if validation == "required" {
+			result.IsRequired = true
+			continue
+		}
+
+		if paramname, ok := strings.CutPrefix(validation, "paramname="); ok {
+			result.HasParamname = true
+			result.Paramname = paramname
+			continue
+		}
+
+		if enums, ok := strings.CutPrefix(validation, "enum="); ok {
+			result.HasEnums = true
+			result.Enums = strings.Split(enums, "|")
+			continue
+		}
+
+		if defaultt, ok := strings.CutPrefix(validation, "default="); ok {
+			result.HasDefault = true
+			result.Default = defaultt
+			continue
+		}
+
+		if minn, ok := strings.CutPrefix(validation, "min="); ok {
+			result.HasMin = true
+			result.Min = minn
+			continue
+		}
+
+		if maxx, ok := strings.CutPrefix(validation, "max="); ok {
+			result.HasMax = true
+			result.Min = maxx
+			continue
+		}
+
+		return FuncInputStructField{}, errors.New("undefined label for apivalidator tag")
+	}
+	return result, nil
 }
 
 // ServeHTTPWrapper always will create function with star receiver
@@ -122,6 +207,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 )`))
 
 	varsTmpl = template.Must(template.New("varsTmpl").Parse(
@@ -167,6 +253,45 @@ func (r httpResponse) write(w http.ResponseWriter, status int) {
 	//call {{.RecvName}}.{{.WrapperFuncName}}(r.Context(), in)
 	//return results
 }`))
+
+	getAndValidateTmpl = template.Must(template.New("getAndValidateTmpl").Parse(
+		`{{define "paramNameOrVarNameTmpl"}}{{if .HasParamname}}{{.Paramname}}{{else}}{{.VarName}}{{end}}{{end}}{{define "getIntVarTmpl"}}{{.VarName}}Raw := r.Form.Get("{{template "paramNameOrVarNameTmpl" .}}") {{if .IsRequired}}
+	if {{.VarName}}Raw == "" {
+		return {{.RecvTypeName}}{}, fmt.Errorf("{{template "paramNameOrVarNameTmpl" .}} must me not empty")
+	}
+	{{end}} {{if .HasDefault}}
+	if {{.VarName}}Raw == "" {
+		{{.VarName}}Raw = {{.Default}}
+	} {{end}}
+	{{.VarName}}, err :=  strconv.Atoi({{.VarName}}Raw)
+	if err != nil {
+		return {{.RecvTypeName}}{}, fmt.Errorf("{{template "paramNameOrVarNameTmpl" .}} must be int")
+	}{{end}}func getAndValidate{{.RecvTypeName}} (r *http.Request) ({{.RecvTypeName}}, error) {
+	err := r.ParseForm()
+	if err != nil {
+		return {{.RecvTypeName}}{}, err
+	} 
+{{range .Fields}}
+	{{if .IsInt}}{{template "getIntVarTmpl" .}}{{else}}string sosi{{end}}
+	{{end}}
+`))
+
+	paramNameOrVarNameTmpl = template.Must(template.New("paramNameOrVarNameTmpl").Parse(
+		`{{define "paramNameOrVarNameTmpl"}}{{if .HasParamname}}{{.Paramname}}{{else}}{{.VarName}}{{end}}{{end}}`))
+
+	getIntVarTmpl = template.Must(template.New("getIntVarTmpl").Parse(
+		`{{define "getIntVarTmpl"}}{{.VarName}}Raw := r.Form.Get("{{template "paramNameOrVarNameTmpl" .}}") {{if .IsRequired}}
+	if {{.VarName}}Raw == "" {
+		return {{.RecvTypeName}}{}, fmt.Errorf("{{template "paramNameOrVarNameTmpl" .}} must me not empty")
+	}
+	{{end}} {{if .HasDefault}}
+	if {{.VarName}}Raw == "" {
+		{{.VarName}}Raw = {{.Default}}
+	} {{end}}
+	{{.VarName}}, err :=  strconv.Atoi({{.VarName}}Raw)
+	if err != nil {
+		return {{.RecvTypeName}}{}, fmt.Errorf("{{template "paramNameOrVarNameTmpl" .}} must be int")
+	}{{end}}`))
 
 	authTmpl = template.Must(template.New("authTmpl").Parse(
 		`func auth(w http.ResponseWriter, r *http.Request) bool {
@@ -218,45 +343,67 @@ func main() {
 		curUrl[f.Options.Method] = f
 	}
 
-	err = packageImportsTmpl.Execute(out, node.Name.Name)
+	templatePath := "handlers_gen/template.tmpl"
+	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	newLines(out, 2)
 
-	err = varsTmpl.Execute(out, nil)
+	tmplParams := Template{
+		Package:       node.Name.Name,
+		ServeWrappers: serveWrappers,
+	}
+
+	err = tmpl.Execute(out, tmplParams)
 	if err != nil {
 		log.Fatal(err)
 	}
-	newLines(out, 2)
 
-	err = typesTmpl.Execute(out, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	newLines(out, 2)
-
-	for _, serveWrapper := range serveWrappers {
-		err := serveHTTPTmpl.Execute(out, serveWrapper)
-		if err != nil {
-			log.Fatal(err)
-		}
-		newLines(out, 2)
-	}
-
-	for _, funcWrapper := range funcWrappers {
-		err := funcTmpl.Execute(out, funcWrapper)
-		if err != nil {
-			log.Fatal(err)
-		}
-		newLines(out, 2)
-	}
-
-	err = authTmpl.Execute(out, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	newLines(out, 2)
+	//err = packageImportsTmpl.Execute(out, node.Name.Name)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//newLines(out, 2)
+	//
+	//err = varsTmpl.Execute(out, nil)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//newLines(out, 2)
+	//
+	//err = typesTmpl.Execute(out, nil)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//newLines(out, 2)
+	//
+	//for _, serveWrapper := range serveWrappers {
+	//	err := serveHTTPTmpl.Execute(out, serveWrapper)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	newLines(out, 2)
+	//}
+	//
+	//for _, funcWrapper := range funcWrappers {
+	//	err := funcTmpl.Execute(out, funcWrapper)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	newLines(out, 2)
+	//
+	//	err = getAndValidateTmpl.Execute(out, funcWrapper.Input)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	newLines(out, 2)
+	//}
+	//
+	//err = authTmpl.Execute(out, nil)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//newLines(out, 2)
 
 	fmt.Printf("%#v", serveWrappers)
 }
@@ -349,12 +496,11 @@ func FuncDeclToFuncInput(f *ast.FuncDecl) (FuncInput, error) {
 		}
 		tagContent, _, ok := strings.Cut(afterTag, `"`)
 
-		fields = append(fields, FuncInputStructField{
-			Name:                   field.Names[0].Name,
-			Type:                   fieldTypeAsIdent.Name,
-			ApiValidatorTagContent: tagContent,
-			Validations:            strings.Split(tagContent, ","),
-		})
+		funcInputStructField, err := NewFuncInputStructField(ident.Name, field.Names[0].Name, fieldTypeAsIdent.Name == "int", tagContent)
+		if err != nil {
+			return FuncInput{}, err
+		}
+		fields = append(fields, funcInputStructField)
 	}
 	result.Fields = fields
 	return result, nil
