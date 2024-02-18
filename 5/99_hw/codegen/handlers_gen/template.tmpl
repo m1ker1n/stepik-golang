@@ -140,12 +140,12 @@ func getAndValidate{{.Input.RecvTypeName}}(r *http.Request) ({{.Input.RecvTypeNa
 {{- end}}
 {{- if .HasMin}}
     if len({{.VarName}}) < {{.Min}} {
-        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must >= {{.Min}}")
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must be >= {{.Min}}")
     }
 {{- end}}
 {{- if .HasMax}}
     if len({{.VarName}}) > {{.Max}} {
-        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must <= {{.Max}}")
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must be <= {{.Max}}")
     }
 {{- end}}
 {{- end -}}
@@ -175,12 +175,12 @@ func getAndValidate{{.Input.RecvTypeName}}(r *http.Request) ({{.Input.RecvTypeNa
     }
 {{- if .HasMin}}
     if {{.VarName}} < {{.Min}} {
-        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must >= {{.Min}}")
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be >= {{.Min}}")
     }
 {{- end}}
 {{- if .HasMax}}
     if {{.VarName}} > {{.Max}} {
-        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must <= {{.Max}}")
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be <= {{.Max}}")
     }
 {{- end}}
 {{- end -}}
