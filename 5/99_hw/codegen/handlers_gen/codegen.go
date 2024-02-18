@@ -181,7 +181,7 @@ func NewFuncInputStructField(recvTypeName string, name string, isInt bool, tagCo
 
 		if maxx, ok := strings.CutPrefix(validation, "max="); ok {
 			result.HasMax = true
-			result.Min = maxx
+			result.Max = maxx
 			continue
 		}
 
