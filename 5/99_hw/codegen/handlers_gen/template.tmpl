@@ -3,6 +3,7 @@ package {{.Package}}
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -24,143 +25,162 @@ func (r httpResponse) write(w http.ResponseWriter, status int) {
 	_, _ = w.Write(marshal)
 }
 
-func auth(w http.ResponseWriter, r *http.Request) bool {
-	if r.Header.Get("X-Auth") != "100500" {
-		httpResponse{Err: errUnauthorized.Error()}.write(w, http.StatusForbidden)
-		return false
-	}
-	return true
+func auth(r *http.Request) bool {
+	return r.Header.Get("X-Auth") == "100500"
 }
 
-{{range $recvName, $serveHttpWrapper := .ServeWrappers}}
-    {{template "serveHttpWithWrappers" $serveHttpWrapper}}
-{{end}}
+{{range $recvName, $serveHttpWrapper := .ServeWrappers -}}
+{{template "serveHttpWithWrappers" $serveHttpWrapper}}
+{{end -}}
 
-{{/* template for creating method ServeHTTP */}}
-{{define "serveHttp"}}{{$serveRecvName := .RecvName}}
+{{- /* template for creating method ServeHTTP */ -}}
+{{- define "serveHttp" -}}
+{{- $serveRecvName := .RecvName}}
 func ({{$serveRecvName}} *{{.RecvTypeName}}) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
-	{{range $url, $methods := .Wrappers }}
+	{{- range $url, $methods := .Wrappers}}
 	case "{{$url}}":
 		switch r.Method {
-		{{range $method, $wrapper := $methods }}
+		{{- range $method, $wrapper := $methods}}
 		case "{{$method}}":
 			{{$serveRecvName}}.{{$wrapper.WrapperFuncName}}(w, r)
-        {{end}}
+        {{- end}}
 		default:
 			httpResponse{Err: errStatusNotAcceptable.Error()}.write(w, http.StatusNotAcceptable)
 		}
-    {{end}}
+    {{- end}}
 	default:
 		httpResponse{Err: errNotFound.Error()}.write(w, http.StatusNotFound)
 	}
 }
-{{end}}
+{{- end -}}
 
-{{/* template for creating wrapperMethods */}}
-{{define "wrapperMethod"}}
-func ({{.RecvName}} {{if .IsStarReceiver}}*{{end}}{{.RecvTypeName}}) {{.WrapperFuncName}}(w http.ResponseWriter, r *http.Request) {
+{{- /* template for creating wrapperMethods */ -}}
+{{- define "wrapperMethod"}}
+func ({{.RecvName}} {{if .IsStarReceiver}}*{{end}}{{.RecvTypeName}}) {{.WrapperFuncName}}(w http.ResponseWriter, r *http.Request) { {{/* removing 1 \n */ -}}
     {{if .Options.Auth}}
-	if authorized := auth(w, r); !authorized {
-		return
-	}
-	{{end}}
-	//get&validate
-    if err := r.ParseForm(); err != nil {
-        return {{.RecvTypeName}}{}, err
+    if authorized := auth(r); !authorized {
+        httpResponse{Err: errUnauthorized.Error()}.write(w, http.StatusForbidden)
+        return
     }
-	{{range .Input.Fields}}
-	    {{if .IsInt}}
-	        {{template "getIntField" .}}
-	    {{else}}
-	        {{template "getStringField" .}}
-	    {{end}}
-	{{end}}
-	//call {{.RecvName}}.{{.WrapperFuncName}}(r.Context(), in)
-	//return results
+    {{end}}
+    in, err := getAndValidate{{.Input.RecvTypeName}}(r)
+    if err != nil {
+        httpResponse{Err: err.Error()}.write(w, http.StatusBadRequest)
+        return
+    }
+
+	result, err := {{.RecvName}}.{{.FuncName}}(r.Context(), in)
+    if err != nil {
+        httpResponse{Err: err.Error()}.write(w, http.StatusBadRequest)
+        return
+    }
+
+	httpResponse{Response: result}.write(w, http.StatusOK)
 }
-{{end}}
 
-{{define "serveHttpWithWrappers"}}
+func getAndValidate{{.Input.RecvTypeName}}(r *http.Request) ({{.Input.RecvTypeName}}, error) {
+    if err := r.ParseForm(); err != nil {
+        return {{.Input.RecvTypeName}}{}, err
+    }
+
+    {{range .Input.Fields -}}
+    {{if .IsInt -}}
+        {{template "getIntField" .}}
+    {{- else -}}
+        {{template "getStringField" .}}
+    {{- end}}
+    {{end -}}
+
+    {{/* \n */}}
+    in := {{.Input.RecvTypeName}}{ {{- range .Input.Fields}}
+        {{.Name}}: {{.VarName}},
+        {{- end}}
+    }
+
+    return in, nil
+}
+{{- end -}}
+
+{{- define "serveHttpWithWrappers" -}}
 {{template "serveHttp" .}}
-{{range $url, $methods := .Wrappers}}
-    {{range $method, $wrapper := $methods}}
+{{- range $url, $methods := .Wrappers}}
+    {{- range $method, $wrapper := $methods}}
     {{template "wrapperMethod" $wrapper}}
-    {{end}}
-{{end}}
-{{end}}
+    {{- end}}
+{{- end}}
+{{- end -}}
 
-{{define "varnameOrParamname"}}
-    {{if .HasParamname}}
-        {{.Paramname}}
-    {{else}}
-        {{.VarName}}
-    {{end}}
-{{end}}
+{{- define "varnameOrParamname" -}}
+    {{- if .HasParamname -}}
+        {{- .Paramname -}}
+    {{- else -}}
+        {{- .VarName -}}
+    {{- end -}}
+{{- end -}}
 
-{{define "getStringField"}}
-    {{.VarName}} := r.Form.Get("{{template "varnameOrParamname" .}}")
-    {{if .IsRequired}}
-        if {{.VarName}} == "" {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must me not empty")
-        }
-    {{end}}
-    {{if .HasDefault}}
-        if {{.VarName}} == "" {
-            {{.VarName}} = {{.Default}}
-        }
-    {{end}}
-    {{if .HasEnums}}
-        switch {{.VarName}} {
-        case "{{.EnumList}}":
-        default:
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be one of {{.EnumListToError}}")
-        }
-    {{end}}
-    {{if .HasMin}}
-        if len({{.VarName}}) < {{.Min}} {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must >= {{.Min}}")
-        }
-    {{end}}
-    {{if .HasMax}}
-        if len({{.VarName}}) > {{.Max}} {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must <= {{.Max}}")
-        }
-    {{end}}
-{{end}}
+{{- define "getStringField" -}}
+{{.VarName}} := r.Form.Get("{{template "varnameOrParamname" .}}"){{/* removing 1 \n */ -}}
+{{if .IsRequired}}
+    if {{.VarName}} == "" {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must me not empty")
+    }
+{{- end}}
+{{- if .HasDefault}}
+    if {{.VarName}} == "" {
+        {{.VarName}} = "{{.Default}}"
+    }
+{{- end}}
+{{- if .HasEnums}}
+    switch {{.VarName}} {
+    case "{{.EnumList}}":
+    default:
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be one of {{.EnumListToError}}")
+    }
+{{- end}}
+{{- if .HasMin}}
+    if len({{.VarName}}) < {{.Min}} {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must >= {{.Min}}")
+    }
+{{- end}}
+{{- if .HasMax}}
+    if len({{.VarName}}) > {{.Max}} {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} len must <= {{.Max}}")
+    }
+{{- end}}
+{{- end -}}
 
-{{define "getIntField"}}
-    {{.VarName}}Raw := r.Form.Get("{{template "varnameOrParamname" .}}")
-    {{if .IsRequired}}
-        if {{.VarName}}Raw == "" {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must me not empty")
-        }
-    {{end}}
-    {{if .HasDefault}}
-        if {{.VarName}}Raw == "" {
-            {{.VarName}}Raw = {{.Default}}
-        }
-    {{end}}
-    {{if .HasEnums}}
-        switch {{.VarName}}Raw {
-        case "{{.EnumList}}":
-        default:
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be one of {{.EnumListToError}}")
-        }
-    {{end}}
+{{- define "getIntField" -}}
+{{.VarName}}Raw := r.Form.Get("{{template "varnameOrParamname" .}}"){{/* removing 1 \n */ -}}
+{{if .IsRequired}}
+    if {{.VarName}}Raw == "" {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must me not empty")
+    }
+{{- end}}
+{{- if .HasDefault}}
+    if {{.VarName}}Raw == "" {
+        {{.VarName}}Raw = {{.Default}}
+    }
+{{- end}}
+{{- if .HasEnums}}
+    switch {{.VarName}}Raw {
+    case "{{.EnumList}}":
+    default:
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be one of {{.EnumListToError}}")
+    }
+{{- end}}
     {{.VarName}}, err := strconv.Atoi({{.VarName}}Raw)
     if err != nil {
         return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must be int")
     }
-    {{if .HasMin}}
-        if {{.VarName}} < {{.Min}} {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must >= {{.Min}}")
-        }
-    {{end}}
-    {{if .HasMax}}
-        if {{.VarName}} > {{.Max}} {
-            return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must <= {{.Max}}")
-        }
-    {{end}}
-{{end}}
-
+{{- if .HasMin}}
+    if {{.VarName}} < {{.Min}} {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must >= {{.Min}}")
+    }
+{{- end}}
+{{- if .HasMax}}
+    if {{.VarName}} > {{.Max}} {
+        return {{.RecvTypeName}}{}, fmt.Errorf("{{template "varnameOrParamname" .}} must <= {{.Max}}")
+    }
+{{- end}}
+{{- end -}}
