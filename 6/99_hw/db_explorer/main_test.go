@@ -444,6 +444,8 @@ func TestApis(t *testing.T) {
 				"user_id":    2,
 				"login":      "qwerty'",
 				"password":   "love\"",
+				"email":      "", //this field has no default so there's must be error in test
+				"info":       "", //this field has no default so there's must be error in test
 				"unkn_field": "love",
 			},
 			Result: CR{
