@@ -17,6 +17,56 @@ type IDBlock struct {
 	ID int
 }
 
+// TestFlatTypes tests if i2s works with flat types such as string, bool, etc.
+// In the the test only float64 values are provided.
+// To test integers use TestFlatTypes_Integers.
+//
+// That's because result has type any, so i2s function can't know which type should
+// result receive.
+func TestFlatTypes(t *testing.T) {
+	testcases := []any{
+		1.5, 42.65, 2.28, "string", false,
+	}
+	for idx, testcase := range testcases {
+		expected := testcase
+		jsonRaw, _ := json.Marshal(expected)
+
+		var tmpData interface{}
+		_ = json.Unmarshal(jsonRaw, &tmpData)
+
+		var result interface{}
+		err := i2s(tmpData, &result)
+		if err != nil {
+			t.Errorf("[%d] unexpected error: %v", idx, err)
+		}
+		if !reflect.DeepEqual(expected, result) {
+			t.Errorf("[%d] results not match\nGot:\n%#v\nExpected:\n%#v", idx, result, expected)
+		}
+	}
+}
+
+func TestFlatTypes_Integers(t *testing.T) {
+	testcases := []any{
+		1, 42, 65,
+	}
+	for idx, testcase := range testcases {
+		expected := testcase
+		jsonRaw, _ := json.Marshal(expected)
+
+		var tmpData interface{}
+		_ = json.Unmarshal(jsonRaw, &tmpData)
+
+		var result int
+		err := i2s(tmpData, &result)
+		if err != nil {
+			t.Errorf("[%d] unexpected error: %v", idx, err)
+		}
+		if !reflect.DeepEqual(expected, result) {
+			t.Errorf("[%d] results not match\nGot:\n%#v\nExpected:\n%#v", idx, result, expected)
+		}
+	}
+}
+
 func TestSimple(t *testing.T) {
 	expected := &Simple{
 		ID:       42,
