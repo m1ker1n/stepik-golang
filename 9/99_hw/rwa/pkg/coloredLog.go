@@ -1,22 +1,9 @@
-package main
+package pkg
 
 import (
 	"fmt"
 	"log"
-	"math/rand"
 )
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
-
-func RandStringRunes(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
-}
-
-// https://gist.github.com/ik5/d8ecde700972d4378d87
 
 var (
 	Info = LogTeal

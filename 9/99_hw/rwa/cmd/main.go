@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"hw9/internal/app"
 	"net/http"
 )
 
@@ -9,7 +10,7 @@ import (
 
 func main() {
 	addr := ":8080"
-	h := GetApp()
+	h := app.GetApp()
 	fmt.Println("start server at", addr)
 	http.ListenAndServe(addr, h)
 }

@@ -1,9 +1,12 @@
-package main
+package test
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/mcuadros/go-lookup"
+	"gopkg.in/d4l3k/messagediff.v1"
+	"hw9/internal/app"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -13,9 +16,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/mcuadros/go-lookup"
-	"gopkg.in/d4l3k/messagediff.v1"
 )
 
 type FakeTime struct {
@@ -87,7 +87,7 @@ func TestApp(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 
 	var (
-		app = GetApp()
+		app = app.GetApp()
 		ts  = httptest.NewServer(app)
 
 		// username = RandStringRunes(16)
