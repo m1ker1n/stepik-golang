@@ -3,6 +3,8 @@ package app
 import (
 	"github.com/gorilla/mux"
 	"hw9/internal/handlers"
+	"hw9/internal/repositories"
+	"hw9/internal/services"
 	"net/http"
 )
 
@@ -23,19 +25,26 @@ type ArticlesHandler interface {
 
 func GetApp() http.Handler {
 	r := mux.NewRouter()
-	userHandler := handlers.NewUser()
+
+	userRepo := repositories.NewUserMap(10)
+	userService := services.NewUser(userRepo)
+	userHandler := handlers.NewUser(userService)
+
 	articlesHandler := handlers.NewArticles()
-	registerHandlers(r, userHandler, articlesHandler)
+
+	registerRoutes(r, userHandler, articlesHandler)
 	return r
 }
 
-func registerHandlers(r *mux.Router, user UserHandler, articles ArticlesHandler) {
-	r.HandleFunc("/users", user.Register).Methods("POST")
-	r.HandleFunc("/users/login", user.Login).Methods("POST")
-	r.HandleFunc("/users/logout", user.Logout).Methods("POST")
-	r.HandleFunc("/user", user.GetCurrentUser).Methods("GET")
-	r.HandleFunc("/user", user.UpdateCurrentUser).Methods("PUT")
+func registerRoutes(r *mux.Router, user UserHandler, articles ArticlesHandler) {
+	apiRouter := r.PathPrefix("/api").Subrouter()
 
-	r.HandleFunc("/articles", articles.CreateArticle).Methods("POST")
-	r.HandleFunc("/articles", articles.GetArticles).Methods("GET")
+	apiRouter.HandleFunc("/users", user.Register).Methods("POST")
+	apiRouter.HandleFunc("/users/login", user.Login).Methods("POST")
+	apiRouter.HandleFunc("/users/logout", user.Logout).Methods("POST")
+	apiRouter.HandleFunc("/user", user.GetCurrentUser).Methods("GET")
+	apiRouter.HandleFunc("/user", user.UpdateCurrentUser).Methods("PUT")
+
+	apiRouter.HandleFunc("/articles", articles.CreateArticle).Methods("POST")
+	apiRouter.HandleFunc("/articles", articles.GetArticles).Methods("GET")
 }
